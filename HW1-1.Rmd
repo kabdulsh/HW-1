@@ -1,0 +1,227 @@
+---
+title: "Homework Assignment 1"
+author: "Khalid Abdulshafi"
+output:
+  html_document:
+    toc: yes
+    theme: united
+    highlight: tango
+  pdf_document:
+    toc: yes
+---
+
+### HW-1 Instructions
+
+> Our class emphasizes clear communication of data analysis results to non-technical audiences. I expect your HTML output documents to be readable and well formatted. I expect you to put ample comments in your R code to make the code understandable. Along with accuracy of results, I am looking for quality of presentation as well.  To complete this assignment, follow these steps:
+
+1. Download the `HW1.Rmd` file from Canvas.
+
+2. Open `HW1.Rmd` in RStudio.
+
+3. Replace the "Your Name Here" text in the `author:` field with names of the students in HW team.
+
+4. Supply your solutions to the homework by editing `HW1.Rmd`.
+
+5. When you have completed the homework and have **checked** that your code both runs in the Console and knits correctly when you click `Knit HTML`, rename the R Markdown file to `HW1_YourNamesHere.Rmd` and then knit again. Submit both the RMD and HTML file on Canvas.  (Obv: YourNameHere should be changed to your own name).
+
+6. Run your code in the Console and Knit HTML frequently to check for errors.
+
+7. You may find it easier to solve a problem by interacting only with the Console at first. 
+
+
+
+We will continue working with the nycflights13 dataset we looked at last class. 
+
+First - lets read the data into an object named `nyc`.
+
+```{r}
+# Please install the nycflights13 package in your console first
+library(nycflights13)
+nyc <- nycflights13::flights
+```
+
+I now would like you to answer the following - all in their own separate R code blocks.
+
+### Data Exploration
+
+Let's first do some simple exploration of this data. I would like for you to answer each of the questions below with an **inline R code** integrated into the text and not in a separate R code block.
+
+**How many airlines are there? (Hint: `levels` and `length` can be useful here)**
+
+```{r}
+num_airlines <- length(levels(factor(nyc$carrier)))
+```
+
+
+There are `r num_airlines` different airlines. 
+
+**How many flights there were by the airline with code `OO`? (Hint: `nrow` can be useful here along with logical indexing)**
+
+```{r}
+oo_flights <- nyc[nyc$carrier == "OO",]
+num_oo_flights <- nrow(oo_flights)
+```
+There were `r num_oo_flights` flights by SkyWest Airlines (OO).
+
+**How long is the shortest flight out of any NYC airport? (Hint: `min` can be useful, remember to handle `NA` values)**
+
+```{r}
+min_airtime <- min(nyc$air_time, na.rm = TRUE)
+```
+The shortest flight out of any NYC airport is `r min_airtime` minutes.
+
+**How many flights where there by United Airlines (code: UA) on Jan 12th 2013?**
+
+```{r}
+ua_flights_jan_12 <- subset(nyc, year == "2013" & month == "1" & day == "12" & carrier == "UA")
+num_ua_flights_jan_12 <- nrow(ua_flights_jan_12)
+```
+On January 12th, 2013, there were `r num_ua_flights_jan_12` flights by United Airlines (UA).
+
+### Basics First
+
+You would want to run `str` and `summary` commands and take a look at the output to make sure you have a good understanding of the datatset. Let's answer a few basic questions first.
+
+```{r}
+str(nyc)
+summary(nyc)
+```
+
+
+**How many destinations can you fly to?**
+
+You can fly to `r length(levels(factor(nyc$dest)))` different destinations.
+
+**How many flights there were?**
+
+There were `r length(levels(factor(nyc$flight)))` different flights.
+
+**How many airlines are there?**
+
+As previously mentioned, there are `r num_airlines` different airlines.
+
+**What is the average distance flown?**
+
+The average distance flown is `r round(mean(nyc$distance),1)` miles.
+
+**What is the median flight time?**
+
+The median flight time is `r median(nyc$air_time, na.rm=TRUE)` minutes.
+
+**What is the maximum arrival delay?**
+
+The maximum arrival delay is `r max(nyc$arr_delay, na.rm=TRUE)` minutes.
+
+### Data Cleaning
+
+Let's do some basic data cleaning.
+
+**Delete the columns that are not not needed or superfluous.**
+
+```{r}
+nyc$year <- NULL
+```
+
+**Factorize the columns that should be treated as a factor but is not currently classified as a factor. (Hint: use the `as.factor` command)**
+
+```{r}
+nyc$month <- as.factor(nyc$month)
+nyc$carrier <- as.factor(nyc$carrier)
+nyc$flight <- as.factor(nyc$flight)
+nyc$tailnum <- as.factor(nyc$tailnum)
+nyc$origin <- as.factor(nyc$origin)
+nyc$dest <- as.factor(nyc$dest)
+```
+
+**Replace the `NA` values in columns with numerical values with either the mean or the median of that column. Provide explanation for why you used mean or median for replacing `NA` values. (Hint: this will need you to use an ifelse statement. See example below)**
+
+```{r}
+#"If the variable is skewed, the mean is biased by the values at the far end of the distribution. Therefore, the median is a better representation of the majority of the values in the variable."
+
+#Source: https://medium.com/analytics-vidhya/feature-engineering-part-1-mean-median-imputation-761043b95379
+
+#Example code for replacing NA values
+nyc$arr_delay <- ifelse(is.na(nyc$arr_delay), median(nyc$arr_delay, na.rm = TRUE), nyc$arr_delay)
+```
+
+
+### Arrival Delay
+
+Lets focus on Arrival Delay.
+
+**What was the average arrival delay for all airports and all airlines combined in Jan 2013?**
+
+```{r}
+mean_arrival_delay <- tapply(nyc$arr_delay, nyc$month, mean)
+mean_arrival_delay_jan <- round(mean_arrival_delay[1])
+```
+
+The average arrival delay for all airports and all airlines combined in January 2013 is `r mean_arrival_delay_jan` minutes.
+
+**Whats was the median arrival delay for all airports and all airlines combined in Jan 2013?**
+
+```{r}
+median_arrival_delay <- tapply(nyc$arr_delay, nyc$month, median)
+median_arrival_delay_jan <- round(median_arrival_delay[1])
+```
+
+The median arrival delay for all airports and all airlines combined in January 2013 is `r median_arrival_delay_jan` minutes.
+
+**Based on your answers to the two questions above, what can you say about the distribution of arrival delays? Provide your answer in a text paragraph form.**
+
+Because the mean is greater than the median, the distribution is skewed right. In practical terms, an airline passenger generally doesn't have to worry as much about a delay in arrival.
+
+### Airline Performance
+
+**Lets see if all airlines are equally terrible as far as flight arrival delays are concerned. For this question you will have to make sure that airline column is coded as a factor.**
+
+**Calculate average arrival delays by airline (Hint: look up the command `tapply`)**
+
+```{r}
+mean_arr_delay_each_airline <- tapply(nyc$arr_delay,nyc$carrier, mean)
+```
+
+**Draw a Bar Plot of Average Arrival Delays for all the Airlines (Hint: command for making a Bar Plot is simply `barplot`)**
+
+```{r}
+barplot(mean_arr_delay_each_airline)
+```
+
+
+### Air Gain
+
+Create a new column named `airgain` such that airgain = (departure delay - arrival delay) : this is the amount of delay a flight made up while in air. (Hint: see below for how to create a new column called Z which is X minus Y)
+
+```{r}
+nyc$air_gain <- nyc$dep_delay - nyc$arr_delay
+```
+
+Explore airgain data - calculate suitable descriptive statistics and appropriate graphics to better understand this data. This part is open ended - you do what you feel works best for you.
+
+```{r}
+mean_air_gain <- mean(nyc$air_gain, na.rm = TRUE)
+median_air_gain <- median(nyc$air_gain, na.rm = TRUE)
+```
+
+
+Answer the questions:
+**Do airlines actually gain any time when in air on average?**
+
+Because the mean (`r round(mean_air_gain)` minutes) is less than the median (`r median_air_gain` minutes), the distribution is skewed left. In practical terms, an aircraft generally gains time when in air, despite any delays in departure or arrival.
+
+**Calculate average airgain for different airlines - which airlines do a better job, which do a worse job?**
+
+```{r}
+mean_air_gain_each_airline <- tapply(nyc$air_gain, nyc$carrier, mean, na.rm = TRUE)
+mean_air_gain_each_airline
+```
+
+American Airlines (AA) did the best job in catching up on time while in the air, whereas Frontier Airlines (F9) did the worst.
+
+That's it. Once you are done, make sure everything works and knits well and then you can uplaod the RMD flile and the html output to Canvas.
+
+> Note that I encourage students to collaborate in doing HWs. If you work with someone then please acknowledge that person in your submission. Each student needs to submit his/her file and must have a full understanding of what you are submitting.
+
+**Have Fun!**
+
+Sanjeev
