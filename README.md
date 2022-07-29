@@ -1,2 +1,2 @@
 # r-project-flight-delay
-Operations: Exploring flight delay data to identify differences in performance between US Carriers
+Operations: Explored flight delay data to identify differences in performance between US Carriers
